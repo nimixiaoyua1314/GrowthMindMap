@@ -22,3 +22,7 @@ Pods/
 # Generated
 成长心图.xcodeproj/
 generate-xcodeproj.sh
+__pycache__/
+
+# Screenshots
+截图/
