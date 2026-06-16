@@ -4,6 +4,7 @@ struct ExperienceListView: View {
     @ObservedObject var viewModel: ExperienceViewModel
     @State private var showFilters = false
     @Environment(\.colorScheme) private var colorScheme
+    private var surfaceColor: Color { colorScheme == .dark ? ZenColor.darkSurface : Color.themeSurface }
 
     var body: some View {
         ZStack {
@@ -53,7 +54,7 @@ struct ExperienceListView: View {
             StatBadge(icon: "clock.fill", value: "\(viewModel.stats.recentCount)", label: "近30天", color: .themeInfo)
         }
         .padding()
-        .background(Color.themeSurface)
+        .background(surfaceColor)
     }
 
     // MARK: - 搜索和筛选
@@ -67,7 +68,7 @@ struct ExperienceListView: View {
                         .textFieldStyle(.plain)
                 }
                 .padding(10)
-                .background(Color.themeSurface)
+                .background(surfaceColor)
                 .cornerRadius(12)
 
                 Button {

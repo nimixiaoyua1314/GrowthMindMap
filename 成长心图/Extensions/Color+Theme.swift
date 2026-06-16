@@ -7,15 +7,24 @@ extension Color {
     static let themeSecondary = Color(hex: "F4A261")     // 暖橙 — 活力
     static let themeAccent = Color(hex: "E76F51")        // 珊瑚 — 热情
 
-    // 背景色
-    static let themeBackground = Color(hex: "FAF7F2")    // 米白
-    static let themeSurface = Color(hex: "FFFFFF")       // 纯白卡片
-    static let themeSurfaceDark = Color(hex: "1C1C1E")   // 暗黑卡片
+    // 背景色 — 暗色模式自动切换
+    static let themeTextPrimary = Color(UIColor { trait in
+        trait.userInterfaceStyle == .dark ? UIColor(hex: "F2F0EC") : UIColor(hex: "2D2D2D")
+    })
+    static let themeTextSecondary = Color(UIColor { trait in
+        trait.userInterfaceStyle == .dark ? UIColor(hex: "C0BDB8") : UIColor(hex: "6B6B6B")
+    })
+    static let themeTextTertiary = Color(UIColor { trait in
+        trait.userInterfaceStyle == .dark ? UIColor(hex: "8A8D96") : UIColor(hex: "9B9B9B")
+    })
 
-    // 文字色
-    static let themeTextPrimary = Color(hex: "2D2D2D")
-    static let themeTextSecondary = Color(hex: "6B6B6B")
-    static let themeTextTertiary = Color(hex: "9B9B9B")
+    // 背景色 — 暗色模式自动切换
+    static let themeSurface = Color(UIColor { trait in
+        trait.userInterfaceStyle == .dark ? UIColor(hex: "1A1D28") : UIColor(hex: "FFFFFF")
+    })
+    static let themeBackground = Color(UIColor { trait in
+        trait.userInterfaceStyle == .dark ? UIColor(hex: "0F111A") : UIColor(hex: "FAF7F2")
+    })
 
     // 功能色
     static let themeSuccess = Color(hex: "4CAF50")
@@ -70,6 +79,25 @@ extension Color {
             blue: Double(b) / 255,
             opacity: Double(a) / 255
         )
+    }
+}
+
+// MARK: - UIColor hex init
+extension UIColor {
+    convenience init(hex: String) {
+        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
+        var int: UInt64 = 0
+        Scanner(string: hex).scanHexInt64(&int)
+        let a, r, g, b: UInt64
+        switch hex.count {
+        case 6:
+            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
+        case 8:
+            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
+        default:
+            (a, r, g, b) = (255, 0, 0, 0)
+        }
+        self.init(red: CGFloat(r) / 255, green: CGFloat(g) / 255, blue: CGFloat(b) / 255, alpha: CGFloat(a) / 255)
     }
 }
 

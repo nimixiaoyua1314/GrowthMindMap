@@ -6,6 +6,7 @@ struct AnalysisView: View {
     @State private var showDeepAnalysisAlert = false
 
     @Environment(\.colorScheme) private var colorScheme
+    private var surfaceColor: Color { colorScheme == .dark ? ZenColor.darkSurface : Color.themeSurface }
 
     var body: some View {
         ZStack {
@@ -129,7 +130,7 @@ struct AnalysisView: View {
                 TraitRadarChartView(traitScores: viewModel.traitScores)
                     .frame(height: 300)
                     .padding()
-                    .background(Color.themeSurface)
+                    .background(surfaceColor)
                     .cornerRadius(16)
             }
 
@@ -233,7 +234,7 @@ struct AnalysisView: View {
             }
         }
         .padding()
-        .background(Color.themeSurface)
+        .background(surfaceColor)
         .cornerRadius(16)
     }
 
@@ -263,7 +264,7 @@ struct AnalysisView: View {
             }
             .padding()
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.themeSurface)
+            .background(surfaceColor)
             .cornerRadius(14)
 
             // 成长
@@ -295,7 +296,7 @@ struct AnalysisView: View {
             }
             .padding()
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.themeSurface)
+            .background(surfaceColor)
             .cornerRadius(14)
         }
     }
@@ -317,7 +318,7 @@ struct AnalysisView: View {
                 .lineSpacing(6)
         }
         .padding()
-        .background(Color.themeSurface)
+        .background(surfaceColor)
         .cornerRadius(16)
     }
 

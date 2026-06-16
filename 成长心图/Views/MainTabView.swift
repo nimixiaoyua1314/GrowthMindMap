@@ -1,4 +1,5 @@
 import SwiftUI
+import Combine
 
 struct MainTabView: View {
     @StateObject private var recordVM: RecordViewModel
@@ -6,6 +7,8 @@ struct MainTabView: View {
     @StateObject private var suggestionVM: SuggestionViewModel
     @StateObject private var panoramaVM: PanoramaViewModel
     @State private var selectedTab = 0
+    @Environment(\.colorScheme) private var colorScheme
+    @AppStorage("colorScheme") private var storedColorScheme: String = "system"
 
     init() {
         let context = PersistenceController.shared.container.viewContext
@@ -60,25 +63,44 @@ struct MainTabView: View {
         .tint(ZenColor.gold)
         .onAppear {
             panoramaVM.loadPanoramaData()
-
-            let appearance = UITabBarAppearance()
-            appearance.configureWithDefaultBackground()
-            appearance.backgroundColor = UIColor(ZenColor.ricePaper)
-
-            let itemAppearance = UITabBarItemAppearance()
-            itemAppearance.normal.iconColor = UIColor(ZenColor.inkLight)
-            itemAppearance.selected.iconColor = UIColor(ZenColor.gold)
-            appearance.stackedLayoutAppearance = itemAppearance
-            appearance.inlineLayoutAppearance = itemAppearance
-            appearance.compactInlineLayoutAppearance = itemAppearance
-
-            UITabBar.appearance().standardAppearance = appearance
-            UITabBar.appearance().scrollEdgeAppearance = appearance
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { updateTabBar() }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
+            updateTabBar()
+        }
+        .onChange(of: storedColorScheme) { _ in
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { updateTabBar() }
         }
         .onChange(of: selectedTab) { newTab in
             if newTab == 0 { panoramaVM.loadPanoramaData() }
             if newTab == 1 { recordVM.fetchAll() }
         }
+    }
+
+    private func resolveIsDark() -> Bool {
+        switch storedColorScheme {
+        case "light": return false
+        case "dark": return true
+        default:
+            return UITraitCollection.current.userInterfaceStyle == .dark
+        }
+    }
+
+    private func updateTabBar() {
+        let isDark = resolveIsDark()
+        let appearance = UITabBarAppearance()
+        appearance.configureWithDefaultBackground()
+        appearance.backgroundColor = UIColor(isDark ? ZenColor.darkBackground : ZenColor.ricePaper)
+
+        let itemAppearance = UITabBarItemAppearance()
+        itemAppearance.normal.iconColor = UIColor(isDark ? ZenColor.darkTextSecondary : ZenColor.inkLight)
+        itemAppearance.selected.iconColor = UIColor(ZenColor.gold)
+        appearance.stackedLayoutAppearance = itemAppearance
+        appearance.inlineLayoutAppearance = itemAppearance
+        appearance.compactInlineLayoutAppearance = itemAppearance
+
+        UITabBar.appearance().standardAppearance = appearance
+        UITabBar.appearance().scrollEdgeAppearance = appearance
     }
 }
 

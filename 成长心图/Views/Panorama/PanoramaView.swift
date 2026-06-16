@@ -1,156 +1,242 @@
 import SwiftUI
 
-/// 全景同心圆 — 支持双指缩放 + 单指移动
 struct PanoramaView: View {
     @ObservedObject var viewModel: PanoramaViewModel
     @Environment(\.colorScheme) private var colorScheme
     @StateObject private var ambient = AmbientSoundEngine()
     var onNavigate: ((Int) -> Void)?
 
-    // 手势状态
-    @State private var scale: CGFloat = 2.0       // 默认 2x 放大
+    @State private var scale: CGFloat = 1.0
     @State private var offset: CGSize = .zero
-    @State private var lastScale: CGFloat = 2.0
+    @State private var lastScale: CGFloat = 1.0
     @State private var lastOffset: CGSize = .zero
 
     var body: some View {
         GeometryReader { geo in
-            let sz = min(geo.size.width, geo.size.height)
-            let cx = geo.size.width / 2
-            let cy = geo.size.height / 2
-            let maxR = (sz / 2) * 0.88
+            let w = geo.size.width
+            let h = geo.size.height
+            let r1 = w * 0.35
+            let r2 = w * 0.28
+            let cx = w / 2
+            let c1y = h * 0.30
+            let c2y = c1y + r1 + r2 + 8
 
             ZStack {
                 bgColor.ignoresSafeArea()
 
-                // ── 整个同心圆组，应用缩放+偏移 ──
                 Group {
-                    // 彩色参考圆环
-                    let ringColors: [Color] = [ZenColor.gold, ZenColor.vermilionLight, ZenColor.jade, Color.themeInfo]
-                    let ringOpacities: [Double] = [0.15, 0.12, 0.10, 0.08]
-                    ForEach(0..<4, id: \.self) { i in
-                        let r = ringR(i, maxR: maxR)
-                        Circle()
-                            .stroke(ringColors[i].opacity(ringOpacities[i]), lineWidth: 1.2)
-                            .frame(width: r * 2, height: r * 2)
-                        Circle()
-                            .fill(ringColors[i].opacity(0.03))
-                            .frame(width: r * 2, height: r * 2)
-                    }
-
-                    // 环标题
-                    let titles = ["经历", "情绪", "个性", "领域"]
-                    ForEach(0..<min(viewModel.rings.count, 4), id: \.self) { i in
-                        let r = ringR(i, maxR: maxR)
-                        Text(titles[i])
-                            .font(.system(size: 10, weight: .medium))
-                            .foregroundColor(ZenColor.inkLight.opacity(0.55))
-                            .offset(y: -r - 10)
-                    }
-
-                    // 环上内容
-                    RingItemsLayer(rings: viewModel.rings, centerX: 0, centerY: 0, maxR: maxR)
-
-                    // 中心
-                    CoreView(text: viewModel.centerText, sub: viewModel.centerSub,
-                             radius: ringR(0, maxR: maxR) * 0.75)
+                    MyCircle(
+                        rings: viewModel.rings,
+                        centerX: cx, centerY: c1y, maxR: r1,
+                        radii: [0.22, 0.40, 0.58, 0.76],
+                        ringColors: [ZenColor.gold, ZenColor.vermilionLight, ZenColor.jade, Color.themeInfo],
+                        core: viewModel.centerText, coreSub: viewModel.centerSub
+                    )
+                    TimelineCircle(
+                        rings: viewModel.timelineRings,
+                        centerX: cx, centerY: c2y, maxR: r2,
+                        radii: [0.28, 0.56, 0.84],
+                        ringColors: [ZenColor.inkLight, ZenColor.vermilion, Color.themeInfo],
+                        core: "时空", coreSub: ""
+                    )
+                    // 切点
+                    Circle().fill(ZenColor.gold.opacity(0.15)).frame(width: 5, height: 5).position(x: cx, y: c1y + r1)
+                    Circle().fill(ZenColor.gold.opacity(0.10)).frame(width: 4, height: 4).position(x: cx, y: c2y - r2)
                 }
-                .scaleEffect(scale)
-                .offset(offset)
-                .position(x: cx, y: cy)
+                .scaleEffect(scale).offset(offset)
 
-                // 空引导
-                if !viewModel.hasData {
-                    Text("点击底部「记录」开始")
-                        .font(.caption).foregroundColor(.themeTextTertiary)
-                        .position(x: cx, y: geo.size.height - 50)
-                }
-
-                // 音乐按钮
-                VStack { HStack { Spacer()
-                    Button { ambient.isPlaying ? ambient.stop() : ambient.start() } label: {
-                        Image(systemName: ambient.isPlaying ? "speaker.wave.2.fill" : "speaker.slash.fill")
-                            .font(.system(size: 13))
-                            .foregroundColor(ambient.isPlaying ? ZenColor.gold : ZenColor.inkPale)
-                            .frame(width: 32, height: 32)
-                            .background(Circle().fill(.ultraThinMaterial))
-                    }.padding(.trailing, 16).padding(.top, 8)
-                }; Spacer() }
-
-                // 缩放提示
-                if scale == 2.0 && offset == .zero {
-                    Text("双指缩放 · 单指移动")
-                        .font(.system(size: 9)).foregroundColor(.themeTextTertiary.opacity(0.5))
-                        .position(x: cx, y: geo.size.height - 40)
+                // 音乐
+                VStack {
+                    HStack {
+                        Spacer()
+                        Button {
+                            ambient.isPlaying ? ambient.stop() : ambient.start()
+                        } label: {
+                            Image(systemName: ambient.isPlaying ? "speaker.wave.2.fill" : "speaker.slash.fill")
+                                .font(.system(size: 13))
+                                .foregroundColor(ambient.isPlaying ? ZenColor.gold : ZenColor.inkPale)
+                                .frame(width: 32, height: 32)
+                                .background(Circle().fill(.ultraThinMaterial))
+                        }
+                        .padding(.trailing, 16)
+                        .padding(.top, 8)
+                    }
+                    Spacer()
                 }
             }
-            // 手势
             .gesture(
                 SimultaneousGesture(
                     MagnificationGesture()
-                        .onChanged { v in scale = min(max(lastScale * v, 0.5), 6.0) }
+                        .onChanged { v in scale = min(max(lastScale * v, 0.4), 4.0) }
                         .onEnded { _ in lastScale = scale },
                     DragGesture()
-                        .onChanged { v in offset = CGSize(width: lastOffset.width + v.translation.width, height: lastOffset.height + v.translation.height) }
+                        .onChanged { v in
+                            offset = CGSize(
+                                width: lastOffset.width + v.translation.width,
+                                height: lastOffset.height + v.translation.height
+                            )
+                        }
                         .onEnded { _ in lastOffset = offset }
                 )
             )
             .onTapGesture(count: 2) {
                 withAnimation(.easeInOut(duration: 0.5)) {
-                    scale = 2.0; offset = .zero; lastScale = 2.0; lastOffset = .zero
+                    scale = 1.0; offset = .zero; lastScale = 1.0; lastOffset = .zero
                 }
             }
         }
         .onAppear { viewModel.loadPanoramaData() }
     }
 
-    private var bgColor: Color { colorScheme == .dark ? ZenColor.darkBackground : ZenColor.ricePaperDeep }
-    private func ringR(_ i: Int, maxR: CGFloat) -> CGFloat { [0.20, 0.36, 0.52, 0.68][i] * maxR }
+    private var bgColor: Color {
+        colorScheme == .dark ? ZenColor.darkBackground : ZenColor.ricePaperDeep
+    }
 }
 
-// MARK: - 环内容层（使用 offset 定位）
-struct RingItemsLayer: View {
+// MARK: - 圆1: 我
+struct MyCircle: View {
     let rings: [RingData]
-    let centerX: CGFloat; let centerY: CGFloat; let maxR: CGFloat
+    let centerX: CGFloat; let centerY: CGFloat
+    let maxR: CGFloat; let radii: [CGFloat]
+    let ringColors: [Color]
+    let core: String; let coreSub: String
 
     var body: some View {
-        ForEach(0..<min(rings.count, 4), id: \.self) { ringIdx in
-            let r = ringR(ringIdx)
-            let items = rings[ringIdx].items
-            ForEach(0..<items.count, id: \.self) { itemIdx in
-                let a = angle(itemIdx, total: items.count)
-                Text(items[itemIdx].label)
-                    .font(.system(size: 9))
-                    .foregroundColor(items[itemIdx].color.opacity(0.85))
-                    .fixedSize()
-                    .padding(.horizontal, 5).padding(.vertical, 2)
-                    .background(items[itemIdx].color.opacity(0.08))
-                    .cornerRadius(4)
-                    .offset(x: r * CGFloat(cos(a)), y: r * CGFloat(sin(a)))
+        let cnt = min(rings.count, radii.count)
+        let coreR = radii[0] * maxR * 0.65
+
+        ZStack {
+            ForEach(0..<cnt, id: \.self) { i in
+                let r = radii[i] * maxR
+                Circle()
+                    .stroke(ringColors[i].opacity(0.13), lineWidth: 1)
+                    .frame(width: r * 2, height: r * 2)
+                    .position(x: centerX, y: centerY)
+                Circle()
+                    .fill(ringColors[i].opacity(0.025))
+                    .frame(width: r * 2, height: r * 2)
+                    .position(x: centerX, y: centerY)
+
+                Text(rings[i].title)
+                    .font(.system(size: 8, weight: .medium))
+                    .foregroundColor(ZenColor.inkLight.opacity(0.45))
+                    .position(x: centerX, y: centerY - r - 7)
             }
+
+            ForEach(0..<cnt, id: \.self) { i in
+                let r = radii[i] * maxR
+                ForEach(rings[i].items.indices, id: \.self) { j in
+                    let total = rings[i].items.count
+                    let angle = total > 0 ? Double(j) / Double(total) * 2 * .pi - .pi / 2 : 0.0
+                    let dx = r * CGFloat(cos(angle))
+                    let dy = r * CGFloat(sin(angle))
+                    Text(rings[i].items[j].label)
+                        .font(.system(size: 7))
+                        .foregroundColor(rings[i].items[j].color.opacity(0.8))
+                        .fixedSize()
+                        .padding(.horizontal, 3).padding(.vertical, 1)
+                        .background(rings[i].items[j].color.opacity(0.06))
+                        .cornerRadius(3)
+                        .position(x: centerX + dx, y: centerY + dy)
+                }
+            }
+
+            VStack(spacing: 0) {
+                Text(core)
+                    .font(.system(size: coreR > 28 ? 15 : 12, weight: .medium, design: .serif))
+                    .foregroundColor(.themeTextPrimary)
+                if !coreSub.isEmpty {
+                    Text(coreSub)
+                        .font(.system(size: 6))
+                        .foregroundColor(.themeTextTertiary)
+                        .lineLimit(1)
+                        .frame(width: coreR * 2.2)
+                }
+            }
+            .frame(width: coreR * 2, height: coreR * 2)
+            .background(
+                Circle().fill(
+                    RadialGradient(
+                        colors: [ZenColor.gold.opacity(0.18), ZenColor.gold.opacity(0.02), .clear],
+                        center: .center, startRadius: coreR * 0.2, endRadius: coreR * 1.2
+                    )
+                )
+            )
+            .position(x: centerX, y: centerY)
         }
-    }
-    private func ringR(_ i: Int) -> CGFloat { [0.20, 0.36, 0.52, 0.68][i] * maxR }
-    private func angle(_ i: Int, total: Int) -> Double {
-        total > 0 ? Double(i) / Double(total) * 2 * .pi - .pi / 2 : 0
     }
 }
 
-// MARK: - 中心
-struct CoreView: View {
-    let text: String; let sub: String; let radius: CGFloat
-    @Environment(\.colorScheme) private var cs
+// MARK: - 圆2: 时空
+struct TimelineCircle: View {
+    let rings: [RingData]
+    let centerX: CGFloat; let centerY: CGFloat
+    let maxR: CGFloat; let radii: [CGFloat]
+    let ringColors: [Color]
+    let core: String; let coreSub: String
 
     var body: some View {
-        VStack(spacing: 2) {
-            Text(text).font(.system(size: 20, weight: .medium, design: .serif))
-                .foregroundColor(cs == .dark ? ZenColor.darkText : ZenColor.inkDark)
-            Text(sub).font(.system(size: 9)).foregroundColor(.themeTextTertiary).lineLimit(1)
-                .multilineTextAlignment(.center).frame(width: radius * 2.5)
+        let cnt = min(rings.count, radii.count)
+        let coreR = radii[0] * maxR * 0.65
+
+        ZStack {
+            ForEach(0..<cnt, id: \.self) { i in
+                let r = radii[i] * maxR
+                Circle()
+                    .stroke(ringColors[i].opacity(0.13), lineWidth: 1)
+                    .frame(width: r * 2, height: r * 2)
+                    .position(x: centerX, y: centerY)
+                Circle()
+                    .fill(ringColors[i].opacity(0.025))
+                    .frame(width: r * 2, height: r * 2)
+                    .position(x: centerX, y: centerY)
+
+                Text(rings[i].title)
+                    .font(.system(size: 8, weight: .medium))
+                    .foregroundColor(ZenColor.inkLight.opacity(0.45))
+                    .position(x: centerX, y: centerY - r - 7)
+            }
+
+            ForEach(0..<cnt, id: \.self) { i in
+                let r = radii[i] * maxR
+                ForEach(rings[i].items.indices, id: \.self) { j in
+                    let total = rings[i].items.count
+                    let angle = total > 0 ? Double(j) / Double(total) * 2 * .pi - .pi / 2 : 0.0
+                    let dx = r * CGFloat(cos(angle))
+                    let dy = r * CGFloat(sin(angle))
+                    Text(rings[i].items[j].label)
+                        .font(.system(size: 7))
+                        .foregroundColor(rings[i].items[j].color.opacity(0.8))
+                        .fixedSize()
+                        .padding(.horizontal, 3).padding(.vertical, 1)
+                        .background(rings[i].items[j].color.opacity(0.06))
+                        .cornerRadius(3)
+                        .position(x: centerX + dx, y: centerY + dy)
+                }
+            }
+
+            VStack(spacing: 0) {
+                Text(core)
+                    .font(.system(size: coreR > 28 ? 15 : 12, weight: .medium, design: .serif))
+                    .foregroundColor(.themeTextPrimary)
+                if !coreSub.isEmpty {
+                    Text(coreSub)
+                        .font(.system(size: 6))
+                        .foregroundColor(.themeTextTertiary)
+                        .lineLimit(1)
+                        .frame(width: coreR * 2.2)
+                }
+            }
+            .frame(width: coreR * 2, height: coreR * 2)
+            .background(
+                Circle().fill(
+                    RadialGradient(
+                        colors: [ZenColor.gold.opacity(0.18), ZenColor.gold.opacity(0.02), .clear],
+                        center: .center, startRadius: coreR * 0.2, endRadius: coreR * 1.2
+                    )
+                )
+            )
+            .position(x: centerX, y: centerY)
         }
-        .frame(width: radius * 2, height: radius * 2)
-        .background(Circle().fill(RadialGradient(
-            colors: [ZenColor.gold.opacity(0.22), ZenColor.gold.opacity(0.03), .clear],
-            center: .center, startRadius: radius * 0.25, endRadius: radius * 1.3)))
     }
 }

@@ -6,6 +6,7 @@ struct ExperienceEditView: View {
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
+    private var surfaceColor: Color { colorScheme == .dark ? ZenColor.darkSurface : Color.themeSurface }
 
     @State private var detailText: String = ""
     @State private var date: Date = Date()
@@ -26,7 +27,7 @@ struct ExperienceEditView: View {
                             .datePickerStyle(.compact)
                             .labelsHidden()
                             .padding(12)
-                            .background(Color.themeSurface)
+                            .background(surfaceColor)
                             .cornerRadius(12)
 
                         // 分类
@@ -61,7 +62,7 @@ struct ExperienceEditView: View {
                     TextEditor(text: $detailText)
                         .font(.body)
                         .padding(12)
-                        .background(Color.themeSurface)
+                        .background(surfaceColor)
                         .cornerRadius(14)
                         .overlay(
                             Group {

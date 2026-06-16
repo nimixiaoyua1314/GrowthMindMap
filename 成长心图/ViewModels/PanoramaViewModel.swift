@@ -18,9 +18,11 @@ struct RingItemData: Identifiable {
 
 @MainActor
 final class PanoramaViewModel: ObservableObject {
-    @Published var rings: [RingData] = []
+    @Published var rings: [RingData] = []           // 圆1: 我 — 经历/情绪/个性/领域
+    @Published var timelineRings: [RingData] = []   // 圆2: 时空 — 历史/当下/未来
     @Published var centerText: String = "我"
     @Published var centerSub: String = ""
+    @Published var timelineCenter: String = "时空"
     @Published var hasData: Bool = false
 
     private let context: NSManagedObjectContext
@@ -132,6 +134,47 @@ final class PanoramaViewModel: ObservableObject {
             ]
         }
 
+        // === Wiki 词条数据 ===
+        let wiki = WikiTermsService.shared.load()
+
+        // === 环5: 曾经历史 ===
+        var historyItems: [RingItemData] = []
+        for t in wiki.history.prefix(8) {
+            historyItems.append(RingItemData(label: t.term, color: ZenColor.inkLight))
+        }
+        // 补充：过去的经历
+        let oldExperiences = experiences.filter { $0.date < Date().addingTimeInterval(-86400 * 180) }
+        for e in oldExperiences.prefix(3) {
+            historyItems.append(RingItemData(label: String(e.title.prefix(8)), color: categoryColor(e.category)))
+        }
+        if historyItems.isEmpty {
+            historyItems = [RingItemData(label: "时间会沉淀智慧", color: ZenColor.inkPale)]
+        }
+
+        // === 环6: 当下热点 ===
+        var hotspotItems: [RingItemData] = []
+        for t in wiki.present.prefix(10) {
+            hotspotItems.append(RingItemData(label: t.term, color: ZenColor.vermilion))
+        }
+        if hotspotItems.isEmpty {
+            hotspotItems = [RingItemData(label: "记录当下", color: ZenColor.vermilionLight)]
+        }
+
+        // === 环7: 潜在未来 ===
+        var futureItems: [RingItemData] = []
+        for t in wiki.future.prefix(10) {
+            futureItems.append(RingItemData(label: t.term, color: Color.themeInfo))
+        }
+        // 补充：分析引擎的成长领域
+        if let a = analysis {
+            for area in a.growthAreas.prefix(2) {
+                futureItems.append(RingItemData(label: "发展\(area)", color: ZenColor.jade))
+            }
+        }
+        if futureItems.isEmpty {
+            futureItems = [RingItemData(label: "无限可能", color: ZenColor.gold)]
+        }
+
         rings = [
             RingData(title: "经历", items: expItems, color: ZenColor.gold),
             RingData(title: "情绪", items: emotionItems, color: ZenColor.vermilionLight),
@@ -139,6 +182,14 @@ final class PanoramaViewModel: ObservableObject {
             RingData(title: "领域", items: domainItems, color: Color.themeInfo),
         ]
 
+        timelineRings = [
+            RingData(title: "历史", items: historyItems, color: ZenColor.inkLight),
+            RingData(title: "当下", items: hotspotItems, color: ZenColor.vermilion),
+            RingData(title: "未来", items: futureItems, color: Color.themeInfo),
+        ]
+
+        let userName = UserDefaults.standard.string(forKey: "user_name") ?? "我"
+        centerText = userName
         centerSub = hasData ? "\(experiences.count)经历 · \(diaries.count)日记 · \(traitItems.count)特质" : "开始记录你的成长"
     }
 

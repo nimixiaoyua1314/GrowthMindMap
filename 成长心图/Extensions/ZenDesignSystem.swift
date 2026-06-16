@@ -27,11 +27,11 @@ struct ZenColor {
     static let vermilionLight = Color(hex: "CC9080")
     static let vermilionPale = Color(hex: "E8D0C8")
 
-    // 暗黑模式 — 深蓝黑底
+    // 暗黑模式 — 深蓝黑底 + 亮文字
     static let darkBackground = Color(hex: "0F111A")
     static let darkSurface = Color(hex: "1A1D28")
-    static let darkText = Color(hex: "E4E2DD")
-    static let darkTextSecondary = Color(hex: "8A8D96")
+    static let darkText = Color(hex: "F2F0EC")           // 更亮的主文字
+    static let darkTextSecondary = Color(hex: "B0B3BA")  // 更亮的次文字
 }
 
 // MARK: - ShapeStyle 便捷扩展

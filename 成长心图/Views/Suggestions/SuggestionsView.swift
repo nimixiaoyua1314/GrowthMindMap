@@ -4,6 +4,7 @@ struct SuggestionsView: View {
     @ObservedObject var viewModel: SuggestionViewModel
     @State private var showCompleted = false
     @Environment(\.colorScheme) private var colorScheme
+    private var surfaceColor: Color { colorScheme == .dark ? ZenColor.darkSurface : Color.themeSurface }
 
     var body: some View {
         ZStack {
@@ -86,7 +87,7 @@ struct SuggestionsView: View {
             Spacer()
         }
         .padding()
-        .background(Color.themeSurface)
+        .background(surfaceColor)
     }
 
     // MARK: - 进行中的建议

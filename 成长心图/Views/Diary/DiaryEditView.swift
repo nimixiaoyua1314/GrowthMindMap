@@ -6,6 +6,7 @@ struct DiaryEditView: View {
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
+    private var surfaceColor: Color { colorScheme == .dark ? ZenColor.darkSurface : Color.themeSurface }
 
     @State private var content: String = ""
     @State private var date: Date = Date()
@@ -24,14 +25,14 @@ struct DiaryEditView: View {
                         .labelsHidden()
                         .padding(12)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Color.themeSurface)
+                        .background(surfaceColor)
                         .cornerRadius(12)
 
                     // 文字内容
                     TextEditor(text: $content)
                         .font(.body)
                         .padding(12)
-                        .background(Color.themeSurface)
+                        .background(surfaceColor)
                         .cornerRadius(14)
                         .overlay(
                             Group {

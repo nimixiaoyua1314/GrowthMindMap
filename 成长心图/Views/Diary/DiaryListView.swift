@@ -5,6 +5,7 @@ struct DiaryListView: View {
     @State private var showCalendar = false
     @State private var isShowingEditor = false
     @Environment(\.colorScheme) private var colorScheme
+    private var surfaceColor: Color { colorScheme == .dark ? ZenColor.darkSurface : Color.themeSurface }
 
     var body: some View {
         ZStack {
@@ -60,7 +61,7 @@ struct DiaryListView: View {
             StatBadge(icon: "flame.fill", value: "\(viewModel.moodStats.maxStreak)天", label: "最长连续", color: .moodExcellent)
         }
         .padding()
-        .background(Color.themeSurface)
+        .background(surfaceColor)
     }
 
     // MARK: - 搜索栏
@@ -73,7 +74,7 @@ struct DiaryListView: View {
                     .textFieldStyle(.plain)
             }
             .padding(10)
-            .background(Color.themeSurface)
+            .background(surfaceColor)
             .cornerRadius(12)
 
             Button {
@@ -103,7 +104,7 @@ struct DiaryListView: View {
             }
         )
         .padding()
-        .background(Color.themeSurface)
+        .background(surfaceColor)
         .shadow(color: .black.opacity(0.04), radius: 4, y: 2)
     }
 
@@ -170,6 +171,8 @@ struct DiaryListView: View {
 // MARK: - 日记卡片
 struct DiaryCardView: View {
     let diary: DiaryEntryEntity
+    @Environment(\.colorScheme) private var cs
+    private var surfaceColor: Color { cs == .dark ? ZenColor.darkSurface : Color.themeSurface }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -226,7 +229,7 @@ struct DiaryCardView: View {
             }
         }
         .padding(16)
-        .background(Color.themeSurface)
+        .background(surfaceColor)
         .cornerRadius(16)
         .shadow(color: .black.opacity(0.04), radius: 4, x: 0, y: 2)
     }

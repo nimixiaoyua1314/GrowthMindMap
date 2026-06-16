@@ -2,6 +2,8 @@ import SwiftUI
 
 struct ExperienceCardView: View {
     let experience: ExperienceEntity
+    @Environment(\.colorScheme) private var cs
+    private var surfaceColor: Color { cs == .dark ? ZenColor.darkSurface : Color.themeSurface }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -74,7 +76,7 @@ struct ExperienceCardView: View {
             }
         }
         .padding(16)
-        .background(Color.themeSurface)
+        .background(surfaceColor)
         .cornerRadius(16)
         .shadow(color: .black.opacity(0.04), radius: 4, x: 0, y: 2)
     }
