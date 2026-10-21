@@ -22,7 +22,8 @@
 | 语言 | Swift 5.9 |
 
 ## 项目结构
-![Uploading 99c24d1dac1f76441e858e9fa427ea99.jpg…]()
+<img width="1022" height="1440" alt="99c24d1dac1f76441e858e9fa427ea99" src="https://github.com/user-attachments/assets/620536c9-320e-4e20-acee-921f10d0e08c" />
+
 
 
 ```
