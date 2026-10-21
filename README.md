@@ -22,6 +22,8 @@
 | 语言 | Swift 5.9 |
 
 ## 项目结构
+![Uploading 99c24d1dac1f76441e858e9fa427ea99.jpg…]()
+
 
 ```
 成长心图/
@@ -106,6 +108,11 @@ xcodegen generate
 - 辅色：`#F4A261` 暖橙（活力）
 - 背景：`#FAF7F2` 米白
 - 暗黑模式完整支持
+
+## 页面截图
+<img width="1440" height="1550" alt="b77fe6ac31264df6eab7da97e971f12b" src="https://github.com/user-attachments/assets/15cc3755-ae2d-4695-8f00-fae65bca2a85" />
+
+
 
 ## License
 
